@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptrace"
-	"os"
 	"sync"
 	"time"
 
@@ -202,13 +201,6 @@ func maxDuration(a, b time.Duration) time.Duration {
 }
 
 func StartTest(providerURL string, rateLimit, totalRequests, reqPerMethod uint) {
-	file, err := os.OpenFile("./test_competitors.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666) //nolint:revive
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	log.SetOutput(file)
-
 	resultsMutex := &sync.Mutex{}
 	results := make(chan BenchmarkResult)
 	client := &http.Client{

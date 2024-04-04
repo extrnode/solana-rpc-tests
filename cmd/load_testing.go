@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"rpc-test/load_testing"
+	"rpc-test/pkg/load_testing"
 )
 
 type flags struct {
@@ -18,8 +18,8 @@ type flags struct {
 // Setup flags
 func getFlags() (f flags) {
 	flag.StringVar(&f.providerUrl, "providerUrl", "", "URL for test")
-	flag.UintVar(&f.rateLimit, "rateLimit", 500, "provider rate limit")
-	flag.UintVar(&f.totalRequests, "totalRequests", 100_000, "total test requests")
+	flag.UintVar(&f.rateLimit, "rateLimit", 10, "provider rate limit")
+	flag.UintVar(&f.totalRequests, "totalRequests", 1000, "total test requests")
 	flag.UintVar(&f.reqPerMethod, "reqPerMethod", 1, "repeated tests of each request")
 	flag.Parse()
 
