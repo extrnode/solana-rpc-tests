@@ -95,9 +95,6 @@ func performRequest(client *http.Client, url string, request []byte, limiter *ra
 			serverProcessing = time.Since(start) - connectDuration - dnsDuration - tlsDuration
 		},
 	}
-	if serverProcessing < 0 {
-		return 0, timings, fmt.Errorf("invalid calculation of serverProcessing")
-	}
 
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
 	response, err := client.Do(req)
@@ -105,6 +102,9 @@ func performRequest(client *http.Client, url string, request []byte, limiter *ra
 		return 0, timings, err
 	}
 	defer response.Body.Close()
+	if serverProcessing < 0 {
+		return 0, timings, fmt.Errorf("invalid calculation of serverProcessing")
+	}
 
 	// read the response body
 	resp, err := io.ReadAll(response.Body)
