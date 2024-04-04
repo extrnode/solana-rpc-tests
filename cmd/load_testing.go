@@ -12,6 +12,7 @@ type flags struct {
 	providerUrl   string
 	rateLimit     uint
 	totalRequests uint
+	reqPerMethod  uint
 }
 
 // Setup flags
@@ -19,6 +20,7 @@ func getFlags() (f flags) {
 	flag.StringVar(&f.providerUrl, "providerUrl", "", "URL for test")
 	flag.UintVar(&f.rateLimit, "rateLimit", 500, "provider rate limit")
 	flag.UintVar(&f.totalRequests, "totalRequests", 100_000, "total test requests")
+	flag.UintVar(&f.reqPerMethod, "reqPerMethod", 1, "repeated tests of each request")
 	flag.Parse()
 
 	return
@@ -31,13 +33,13 @@ func main() {
 		log.Fatalf("Log setup: %s", err)
 	}
 
-	log.Infof("Start testing %s, rate limit: %d req/sec, total requests: %d", f.providerUrl, f.rateLimit, f.totalRequests)
+	log.Infof("Start testing %s; rate limit: %d req/sec; total requests: %d; repeated tests of each request: %d", f.providerUrl, f.rateLimit, f.totalRequests, f.reqPerMethod)
 	if f.providerUrl == "" {
 		log.Error("Empty providerUrl")
 		return
 	}
 
-	load_testing.StartTest(f.providerUrl, f.rateLimit, f.totalRequests)
+	load_testing.StartTest(f.providerUrl, f.rateLimit, f.totalRequests, f.reqPerMethod)
 }
 
 func setupLogger() error {

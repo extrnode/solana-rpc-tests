@@ -19,10 +19,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-const (
-	reqPerMethod = 1
-)
-
 type BenchmarkResult struct {
 	URL            string
 	Method         string
@@ -135,14 +131,13 @@ func performRequest(client *http.Client, url string, request []byte, limiter *ra
 	return requestTime, timings, nil
 }
 
-func benchmarkMethod(url, method string, params interface{}, client *http.Client, request []byte, limiter *rate.Limiter) BenchmarkResult {
+func benchmarkMethod(url, method string, params interface{}, client *http.Client, request []byte, limiter *rate.Limiter, reqPerMethod uint) BenchmarkResult {
 	var totalTime time.Duration
 	var minTimings, maxTimings, totalTimings, avgTimings RequestTimings
 
 	var performedRequests int
-	for i := 0; i < reqPerMethod; i++ {
+	for i := 0; i < int(reqPerMethod); i++ {
 		requestTime, timings, err := performRequest(client, url, request, limiter)
-
 		if err != nil {
 			log.Printf("ERROR: URL: %s, ERR: %s", url, err)
 			continue
@@ -206,7 +201,7 @@ func maxDuration(a, b time.Duration) time.Duration {
 	return b
 }
 
-func StartTest(providerURL string, rateLimit, totalRequests uint) {
+func StartTest(providerURL string, rateLimit, totalRequests, reqPerMethod uint) {
 	file, err := os.OpenFile("./test_competitors.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666) //nolint:revive
 	if err != nil {
 		log.Fatal(err)
@@ -229,9 +224,9 @@ func StartTest(providerURL string, rateLimit, totalRequests uint) {
 	for i := 0; i < int(totalRequests); i++ {
 		accountIndex := i % len(AccountKeys)
 		wg.Add(1)
-		go func(url string, accountKeys []string, accountIndex int) {
+		go func(accountIndex int) {
 			defer wg.Done()
-			var k interface{} = accountKeys[accountIndex]
+			var k interface{} = AccountKeys[accountIndex]
 			params := []interface{}{k, map[string]interface{}{
 				"encoding":   "jsonParsed",
 				"commitment": "finalized",
@@ -241,11 +236,11 @@ func StartTest(providerURL string, rateLimit, totalRequests uint) {
 				log.Errorf("Marshal: %s", err)
 				return
 			}
-			resp := benchmarkMethod(url, GetAccountInfo, params, client, reqBody, rate.NewLimiter(rate.Limit(rateLimit), 1))
+			resp := benchmarkMethod(providerURL, GetAccountInfo, params, client, reqBody, rate.NewLimiter(rate.Limit(rateLimit), 1), reqPerMethod)
 			if resp.RequestsCount != 0 {
 				results <- resp
 			}
-		}(providerURL, AccountKeys, accountIndex)
+		}(accountIndex)
 	}
 
 	go func() {
